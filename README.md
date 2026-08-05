@@ -16,7 +16,7 @@ The objective is to build a clear and approachable analytics workflow that will 
 - Present insights in dashboards and reports.
 - Allow users to explore insights through a chatbot interface.
 
-This initial version contains only the project structure. Analytics features will be added in later stages.
+The initial structure, dataset selection, and raw dataset inventory milestones are complete. Analytics features will be added in later stages.
 
 ## Planned Technology Stack
 
@@ -47,9 +47,15 @@ This initial version contains only the project structure. Analytics features wil
 
 ## Current Project Status
 
-**Stage: Initial project setup**
+**Stage: Milestone 2B complete — raw dataset acquired and inventoried**
 
-The folder structure, starter documentation, dependency list, environment-variable template, and Git ignore rules are in place. No ETL pipeline, database, dashboard, chatbot, Docker configuration, CI/CD workflow, or analytics code has been implemented yet.
+The folder structure, starter documentation, dependency list, environment-variable template, and Git ignore rules are in place. Milestone 2 selected the **Olist Brazilian E-commerce Public Dataset** after comparison with AdventureWorks, Northwind, and Superstore. The decision and planned relational model are documented in [`docs/02_dataset_selection.md`](docs/02_dataset_selection.md).
+
+### Selected dataset and business use case
+
+InsightFlow AI will use Olist's anonymized Brazilian marketplace data to connect sales, customers, products, sellers, payments, deliveries, and reviews. The future platform will help marketplace stakeholders monitor performance, diagnose operational and customer-experience issues, and develop practical predictive use cases such as late-delivery and low-review risk.
+
+The nine original Olist CSV files are stored unchanged under `data/raw/olist/`. Their schemas, row counts, candidate keys, foreign keys, relationship checks, and inspection-only quality observations are documented in [`docs/03_dataset_inventory.md`](docs/03_dataset_inventory.md). No cleaning, ETL, EDA, database, dashboard, chatbot, or predictive model has been implemented.
 
 ## Basic Setup
 

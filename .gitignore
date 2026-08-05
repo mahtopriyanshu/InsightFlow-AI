@@ -35,3 +35,7 @@ data/processed/*
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# Raw datasets (keep only placeholder)
+data/raw/*
+!data/raw/.gitkeep
