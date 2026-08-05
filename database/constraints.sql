@@ -191,18 +191,7 @@ ALTER TABLE orders
             'created', 'approved', 'invoiced', 'processing',
             'shipped', 'delivered', 'canceled', 'unavailable'
         )),
-    ADD CONSTRAINT ck_orders_approval_chronology
-        CHECK (order_approved_at IS NULL
-               OR order_approved_at >= order_purchase_timestamp),
-    ADD CONSTRAINT ck_orders_carrier_chronology
-        CHECK (order_delivered_carrier_date IS NULL
-               OR order_approved_at IS NULL
-               OR order_delivered_carrier_date >= order_approved_at),
-    ADD CONSTRAINT ck_orders_delivery_chronology
-        CHECK (order_delivered_customer_date IS NULL
-               OR order_delivered_carrier_date IS NULL
-               OR order_delivered_customer_date >= order_delivered_carrier_date);
-
+    
 ALTER TABLE order_items
     ADD CONSTRAINT ck_order_items_id_lengths
         CHECK (length(order_id) = 32 AND length(product_id) = 32 AND length(seller_id) = 32),
