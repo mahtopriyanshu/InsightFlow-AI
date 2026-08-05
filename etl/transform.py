@@ -1,19 +1,13 @@
-"""Placeholder functions for future cleaning and transformation."""
-
+﻿"""Transformations for customer data."""
 import pandas as pd
 
 
-def clean_dataframe(dataframe: pd.DataFrame) -> pd.DataFrame:
-    """Return the input unchanged until cleaning rules are approved."""
-    # TODO: Apply approved null, duplicate, and datatype rules.
-    return dataframe
-
-
-def transform_table(
-    table_name: str,
-    dataframe: pd.DataFrame,
-) -> pd.DataFrame:
-    """Return the input unchanged until table-specific rules are added."""
-    # TODO: Route to the approved transformation for table_name.
-    return dataframe
-
+def transform_customers(df: pd.DataFrame) -> pd.DataFrame:
+    """Copy customer data, trim text boundaries, and add batch load time."""
+    transformed = df.copy(deep=True)
+    text_columns = transformed.select_dtypes(include=["object", "string"]).columns
+    for column in text_columns:
+        transformed[column] = transformed[column].str.strip()
+    batch_loaded_at = pd.Timestamp.now(tz="UTC")
+    transformed["etl_loaded_at"] = batch_loaded_at
+    return transformed
