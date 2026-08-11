@@ -4,3 +4,8 @@ jupyter
 openpyxl
 python-dotenv
 psycopg[binary]>=3.2,<4
+streamlit>=1.40,<2
+plotly>=5.24,<7
+scikit-learn>=1.9,<2
+statsmodels>=0.14,<1
+sqlglot>=27,<30

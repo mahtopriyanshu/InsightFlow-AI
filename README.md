@@ -1,92 +1,154 @@
 # InsightFlow AI
 
-InsightFlow AI is a beginner-friendly, end-to-end analytics project designed to show how raw data can eventually be transformed into useful insights and accessible through dashboards and an AI-assisted chat experience.
+InsightFlow AI is an end-to-end e-commerce intelligence platform built on the Olist marketplace dataset. It combines governed PostgreSQL analytics, interactive Streamlit decision-support workflows, statistical forecasting, and a constrained AI business analyst.
 
-## Problem Statement
+## Problem
 
-Organizations often store useful data in disconnected files and systems. Without a clear analytics workflow, it can be difficult for beginners and non-technical users to clean that data, explore it, and turn it into understandable business insights.
+Marketplace data is spread across orders, customers, products, sellers, payments, delivery events, and reviews. InsightFlow AI turns those disconnected records into consistent business metrics, searchable entity intelligence, evidence-backed insights, and safe natural-language analysis without allowing an AI provider to execute arbitrary code or SQL.
 
-## Project Objective
+## Major Features
 
-The objective is to build a clear and approachable analytics workflow that will eventually:
+- Executive and business analytics for revenue, orders, customers, payments, delivery, and reviews
+- Customer intelligence with RFM segmentation, Pareto analysis, profiles, and scoped search
+- Product and Seller Intelligence covering economics, experience, fulfillment, freight, and concentration
+- Deterministic anomaly and opportunity detection using completed-period historical baselines
+- Compare Mode for periods, categories, destination states, and sellers
+- Explain KPI with descriptive, evidence-backed driver decomposition and causal guardrails
+- Business Health scoring with transparent components, risks, opportunities, and recommendations
+- Revenue and order forecasting with chronological validation and reliability guardrails
+- Governed AI Business Analyst with filter-aware questions, verified answers, charts, tables, and query evidence
+- Filter-aware reports with CSV and Excel exports and a 50,000-row cap
 
-- Collect and prepare raw data.
-- Store clean, structured data.
-- Analyze data with SQL and Python.
-- Present insights in dashboards and reports.
-- Allow users to explore insights through a chatbot interface.
+## AI Assistant Architecture
 
-The initial structure, dataset selection, and raw dataset inventory milestones are complete. Analytics features will be added in later stages.
+```mermaid
+flowchart LR
+    A["Question + dashboard filters"] --> B["Gemini planning"]
+    B --> C["Semantic allowlist"]
+    C --> D["Deterministic parameterized SQL"]
+    D --> E["sqlglot validation"]
+    E --> F["Read-only PostgreSQL execution"]
+    F --> G["Verified bounded result"]
+    G --> H["Deterministic answer, chart, and evidence"]
+```
 
-## Planned Technology Stack
+Gemini produces only a structured plan constrained to approved intents, metrics, dimensions, and scopes. Application code generates the SQL, validates it structurally, and executes it through a dedicated read-only connection with a statement timeout and row limit. Gemini never directly executes arbitrary SQL or Python.
 
-- Python for data processing and application logic
-- pandas and NumPy for data preparation and analysis
-- Jupyter Notebook for exploration and learning
-- SQL and a relational database for structured data storage and querying
-- Streamlit for the interactive application
-- A dashboard tool for data visualization
-- An AI model or API for the chatbot
-- Docker and GitHub Actions for future deployment and automation
+## Forecasting
 
-## Planned Project Modules
+The forecasting workspace evaluates five candidates:
 
-- **Data:** Raw input files and processed datasets
-- **Notebooks:** Exploratory analysis and learning exercises
-- **ETL:** Future extract, transform, and load workflows
-- **Database:** Future database definitions and supporting files
-- **SQL:** Queries used for analysis and reporting
-- **Dashboard:** Assets and configuration for standalone business-intelligence dashboards, such as Power BI or Tableau dashboards
-- **Streamlit app:** Python code for the future interactive Streamlit web application
-- **Chatbot:** Future natural-language analytics assistant
-- **Reports:** Generated analysis outputs
-- **Tests:** Automated checks for future project code
-- **Docs:** Project documentation
-- **Config:** Non-secret project configuration
-- **GitHub workflows:** Future automation and CI/CD definitions
+- Naive
+- Drift
+- Linear Trend
+- Holt Exponential Smoothing
+- Random Forest
 
-## Current Project Status
+Models are compared using expanding-window, one-step-ahead backtesting. The lowest-WAPE eligible model is selected independently for payment revenue and distinct orders, then used for a three-month horizon. Forecasts are decision-support estimates rather than guarantees; filtered scopes with insufficient history or volume are rejected by explicit guardrails.
 
-**Stage: Milestone 2B complete — raw dataset acquired and inventoried**
+## Tech Stack
 
-The folder structure, starter documentation, dependency list, environment-variable template, and Git ignore rules are in place. Milestone 2 selected the **Olist Brazilian E-commerce Public Dataset** after comparison with AdventureWorks, Northwind, and Superstore. The decision and planned relational model are documented in [`docs/02_dataset_selection.md`](docs/02_dataset_selection.md).
+- Python, pandas, NumPy
+- Streamlit and Plotly
+- PostgreSQL and psycopg
+- SQL and sqlglot
+- scikit-learn and statsmodels
+- Jupyter notebooks for exploration
+- pytest for automated validation
+- Gemini API for constrained Assistant planning
 
-### Selected dataset and business use case
+## Security
 
-InsightFlow AI will use Olist's anonymized Brazilian marketplace data to connect sales, customers, products, sellers, payments, deliveries, and reviews. The future platform will help marketplace stakeholders monitor performance, diagnose operational and customer-experience issues, and develop practical predictive use cases such as late-delivery and low-review risk.
+- Database and provider secrets are loaded from environment variables; `.env` and `.streamlit/secrets.toml` are ignored
+- Assistant SQL is generated by deterministic application code from semantic allowlists
+- sqlglot enforces one bounded read-only `SELECT`, approved schemas/tables/columns/functions, and join limits
+- Assistant execution uses a dedicated read-only PostgreSQL transaction mode, a 10-second timeout, and a 100-row limit
+- User-facing failures and operational logs do not include raw credentials or connection strings
 
-The nine original Olist CSV files are stored unchanged under `data/raw/olist/`. Their schemas, row counts, candidate keys, foreign keys, relationship checks, and inspection-only quality observations are documented in [`docs/03_dataset_inventory.md`](docs/03_dataset_inventory.md). No cleaning, ETL, EDA, database, dashboard, chatbot, or predictive model has been implemented.
+## Testing
 
-## Basic Setup
+The validated M19 baseline includes:
 
-1. Clone or download this repository.
-2. Open a terminal in the `InsightFlow-AI` folder.
-3. Create a virtual environment:
+- 106/106 unit tests passed
+- 38/38 focused Assistant tests passed
+- 15/15 golden Assistant questions passed
+- 14/14 Assistant UX checks passed
+- All nine Streamlit pages rendered without Python or Streamlit exceptions
+- Final M9–M19 regression: PASS
+
+M20 reused focused tests for Product Intelligence, anomalies, forecasting resilience, provider failure, and startup health. It did not rerun the frozen full regression suite.
+
+## Local Setup
+
+Requirements: Python 3.12+, PostgreSQL, and the Olist source CSV files under `data/raw/olist/`.
+
+1. Create and activate a virtual environment from the repository root:
 
    ```bash
    python -m venv .venv
    ```
 
-4. Activate the virtual environment:
-
-   On Windows PowerShell:
+   Windows PowerShell:
 
    ```powershell
    .\.venv\Scripts\Activate.ps1
    ```
 
-   On macOS or Linux:
+   macOS/Linux:
 
    ```bash
    source .venv/bin/activate
    ```
 
-5. Install the starter dependencies when you are ready:
+2. Install dependencies:
 
    ```bash
-   pip install -r requirements.txt
+   python -m pip install -r requirements.txt
    ```
 
-6. Copy `.env.example` to `.env` and replace placeholders only when future modules require them. Never commit the `.env` file.
+3. Copy `.env.example` to `.env` and provide local values for `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD`. Add `AI_API_KEY` to enable Gemini planning. Never commit `.env`.
 
-> Dependencies are not installed automatically as part of this initial setup.
+4. Create the PostgreSQL database and initialize it in repository order:
+
+   ```bash
+   createdb insightflow_ai
+   psql -d insightflow_ai -f database/schema.sql
+   python -m etl.run_pipeline
+   psql -d insightflow_ai -f database/constraints.sql
+   psql -d insightflow_ai -f database/indexes.sql
+   python database/apply_milestone10.py
+   ```
+
+5. Start the application:
+
+   ```bash
+   python -m streamlit run streamlit_app/app.py
+   ```
+
+## Architecture
+
+```mermaid
+flowchart TB
+    CSV["Olist source CSVs"] --> ETL["Validated Python ETL"]
+    ETL --> PG["PostgreSQL curated tables and serving views"]
+    PG --> SVC["Cached analytics services"]
+    SVC --> UI["Nine-page Streamlit application"]
+    SVC --> FCAST["Forecasting and deterministic insight engines"]
+    UI --> ASSIST["Governed AI Assistant"]
+    ASSIST --> PG
+```
+
+The application uses five-minute Streamlit data caches and a reusable read-only PostgreSQL application connection. The Assistant uses a separate bounded read-only connection for each governed execution.
+
+## Limitations
+
+- The Olist dataset is historical and anonymized; results do not represent current marketplace conditions
+- Observational comparisons and driver decompositions do not establish causality
+- Forecasts use limited historical monthly data and a three-month horizon; uncertainty bands are empirical, not guarantees
+- Gemini availability and quota affect planning, although existing analytics remain available
+- Streamlit caching is process-local and is not a distributed production cache
+- The application assumes the validated PostgreSQL schema and serving objects already exist
+
+## Deployment
+
+M20 prepares configuration, resilience, logging, and performance for deployment, but the project is not deployed yet. Cloud deployment and provider-specific infrastructure are the scope of the next milestone, M21.
