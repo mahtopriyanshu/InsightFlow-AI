@@ -1,178 +1,77 @@
-# Planned System Architecture
+# InsightFlow AI — Current Architecture
 
-## Purpose
+## System Overview
 
-InsightFlow AI is planned as an end-to-end analytics platform that turns untouched marketplace CSV files into governed data, business dashboards, an interactive application, natural-language assistance, and shareable reports.
-
-The architecture is a future-state plan. At the current milestone, the raw Olist data has been inventoried and limited EDA has begun; ETL, PostgreSQL, Power BI, Streamlit, the AI chatbot, and automated PDF reporting have not yet been implemented.
-
-## Future pipeline
-
-```text
-Raw CSV → ETL → PostgreSQL → Power BI → Streamlit → AI Chatbot → PDF Reports
-```
+InsightFlow AI is a production-deployed analytical application built from an immutable public e-commerce dataset, a validated Python ETL pipeline, governed PostgreSQL storage, reusable analytics and intelligence services, a nine-page Streamlit interface, and a constrained Gemini planning integration.
 
 ```mermaid
-flowchart LR
-    A["Raw CSV"] --> B["ETL"]
-    B --> C["PostgreSQL"]
-    C --> D["Power BI"]
-    C --> E["Streamlit"]
-    D --> E
-    E --> F["AI Chatbot"]
-    F --> G["PDF Reports"]
+flowchart TB
+    CSV["Nine Olist source CSVs"] --> ETL["Extract → validate → transform → load"]
+    ETL --> PG["Neon PostgreSQL / olist_analytics"]
+    PG --> SERVE["Curated tables + serving views + materialized revenue"]
+    SERVE --> PY["Cached Python analytics services"]
+    PY --> APP["Streamlit on Render"]
+    APP --> DASH["Executive, Sales, Delivery, Reviews"]
+    APP --> ENT["Customer, Product, Seller Intelligence"]
+    APP --> DEC["Compare, Explain, Health, Forecasting"]
+    APP --> AI["Governed AI Business Analyst"]
+    AI --> GEM["Gemini structured planning"]
+    AI --> PG
+
+    GH["GitHub"] --> CI["GitHub Actions quality gates"]
+    CI --> GH
+    GH -->|"Git-backed auto-deploy"| APP
 ```
 
-The linear arrow expresses the planned user journey, while the diagram shows that both Power BI and Streamlit consume governed PostgreSQL data. Streamlit can present selected dashboard insights and provide the interface through which users reach the chatbot and report features.
+## Data and ETL
 
-## Component responsibilities
+The nine raw Olist files remain outside Git and are treated as immutable input. The Python ETL pipeline extracts tables in dependency order, validates required columns and primary keys, applies schema-aligned transformations, checks every foreign-key relationship in memory, and loads the curated PostgreSQL tables. Schema creation, loading, constraints, indexes, and analytics-serving objects remain separate, explicit steps.
 
-### 1. Raw CSV
+## PostgreSQL Analytics Layer
 
-Location: `data/raw/olist/`
+The `olist_analytics` schema contains source-aligned curated tables for category translation, geography, customers, products, sellers, orders, order items, payments, and reviews. Constraints protect entity relationships, while targeted indexes support timestamp, state, category, seller, payment, and review access patterns.
 
-Responsibilities:
+Three serving objects stabilize analytics:
 
-- Preserve the nine original Olist CSV files exactly as acquired.
-- Provide an auditable source for all later processing.
-- Remain read-only during analysis and pipeline runs.
+- `mv_order_revenue`: one row per order with payment, merchandise, freight, and total-item values
+- `vw_order_revenue`: stable read interface over materialized order economics
+- `vw_order_delivery_metrics`: actual delivery duration, promise variance, and delivery classification
 
-Rules:
+Application services prefer these objects and retain a tested fallback CTE architecture. Production uses Neon PostgreSQL over SSL/TLS.
 
-- Never clean or overwrite source files.
-- Record source, license, file inventory, and integrity information.
-- Write transformed outputs elsewhere.
+## Application and Intelligence Services
 
-### 2. ETL
+Streamlit pages call domain services rather than embedding business logic in UI components. Five-minute data caches avoid repeated read workloads for unchanged filter scopes. The application provides Executive, Sales, Customer, Product, Seller, Delivery, Review, Reports, and AI Assistant workspaces.
 
-Planned location: `etl/`
+Deterministic intelligence modules implement:
 
-Responsibilities:
+- RFM segmentation and customer-value concentration
+- Product/Seller signals and portfolio concentration
+- Rolling robust anomaly/opportunity detection
+- Comparable-period and entity comparison
+- Descriptive KPI driver decomposition
+- Transparent Business Health scoring and recommendations
+- Five-model expanding-window forecast selection
 
-- **Extract** raw CSV records using explicit schemas.
-- **Transform** approved types, values, keys, and quality rules.
-- **Load** validated records into PostgreSQL.
-- Log row counts, rejected records, and pipeline results.
-- Support repeatable and testable reloads.
+Global date, destination-state, and category filters use an immutable `FilterState` shared across services.
 
-Potential transformations include timestamp parsing, type validation, controlled category handling, and creation of a ZIP-prefix geography dimension. These decisions must be documented before implementation.
+## Governed AI Boundary
 
-### 3. PostgreSQL
+Gemini never receives database credentials and never executes arbitrary SQL or Python. It maps a question and current filter context to a constrained structured plan. The application validates plan metadata, generates deterministic parameterized SQL, parses it with sqlglot, checks semantic/schema/table/column/function/join/limit policies, and executes through a dedicated read-only PostgreSQL connection with a 10-second timeout and 100-row cap. Results are verified before deterministic formatting, visualization, and evidence display.
 
-Planned supporting locations: `database/` and `sql/`
+## Production and Delivery
 
-Responsibilities:
+GitHub is the source of truth. GitHub Actions runs compile, repository-safety, and 90 deterministic test gates without production credentials. CI validation and deployment are separate: Render auto-deploys the Git-backed Streamlit service through its existing configuration. Render connects to Neon and Gemini using protected environment variables. Production health, database compatibility, and the Render → Gemini → Neon path were validated in M21.
 
-- Store governed relational tables with enforced keys and constraints.
-- Separate staging data from analytics-ready models.
-- Provide reusable SQL views for business metrics.
-- Act as the consistent data source for Power BI, Streamlit, and chatbot queries.
+## Security and Failure Isolation
 
-Likely model areas:
+- Environment-only secrets; forbidden-file CI gate
+- Read-only application queries and stricter dedicated Assistant execution
+- Parameterization and semantic SQL allowlists
+- Bounded statements and result sizes
+- Provider failures classified separately with manual retry
+- Forecast failures isolated to the forecast workspace
+- Safe operational logging without secret/configuration values
+- Generic user-facing failure messages that preserve other available analytics where possible
 
-- Orders and order lifecycle
-- Order items and commercial measures
-- Customers and repeat-buyer identity
-- Products and translated categories
-- Sellers
-- Payments
-- Reviews
-- Controlled geography
-
-### 4. Power BI
-
-Planned location: `dashboard/`
-
-Responsibilities:
-
-- Deliver interactive management dashboards.
-- Present sales, order status, delivery, customer, seller, product, payment, and review KPIs.
-- Use curated PostgreSQL views rather than raw CSV joins.
-- Apply documented measure definitions and filters.
-
-Power BI is the primary business-intelligence presentation layer. It should not become the only place where business logic exists; reusable logic belongs in governed SQL or clearly documented measures.
-
-### 5. Streamlit
-
-Planned location: `streamlit_app/`
-
-Responsibilities:
-
-- Provide a browser-based project interface.
-- Present selected metrics and explanations for users who do not use Power BI.
-- Offer controlled filters and drill-downs.
-- Host the future natural-language chatbot experience.
-- Trigger approved report-generation workflows.
-
-### 6. AI Chatbot
-
-Planned location: `chatbot/`
-
-Responsibilities:
-
-- Translate user questions into safe, approved analytical requests.
-- Query curated PostgreSQL views or a governed semantic layer.
-- Explain results in clear business language.
-- Preserve metric definitions and cite the data context used.
-- Refuse unsupported conclusions when data is unavailable.
-
-Safety and governance principles:
-
-- Use read-only database credentials.
-- Allow-list accessible schemas, views, and query patterns.
-- Limit query cost and result size.
-- Never expose secrets or raw personal identifiers.
-- Show assumptions and distinguish retrieved facts from model-generated explanation.
-
-### 7. PDF Reports
-
-Planned location: `reports/`
-
-Responsibilities:
-
-- Produce consistent, shareable snapshots of approved metrics and commentary.
-- Include report date, filters, metric definitions, and data-refresh information.
-- Combine selected charts, tables, and chatbot-assisted narrative only after validation.
-
-## Supporting concerns
-
-### Configuration and secrets
-
-- Store non-secret configuration in `config/`.
-- Keep credentials in environment variables loaded from an uncommitted `.env` file.
-- Use separate credentials for development and deployment.
-
-### Testing
-
-Planned location: `tests/`
-
-- Test schema assumptions and key uniqueness.
-- Test foreign-key and row-count expectations.
-- Test ETL transformations and SQL metric definitions.
-- Test chatbot query restrictions and report generation.
-
-### Observability
-
-- Record pipeline start/end time, source file identity, rows read, rows loaded, and failures.
-- Expose the last successful refresh time to dashboards and reports.
-- Preserve errors without silently dropping records.
-
-### Deployment and automation
-
-Planned location: `.github/workflows/`
-
-- Run tests and validation checks on proposed changes.
-- Build deployable application artifacts when implementation begins.
-- Keep production deployment gated behind review and environment-specific secrets.
-
-## Data flow summary
-
-1. Untouched Olist CSV files remain the source of record in `data/raw/olist/`.
-2. ETL validates and transforms copies of source records according to documented rules.
-3. PostgreSQL enforces the relational model and exposes curated analytical views.
-4. Power BI consumes those views for governed dashboards.
-5. Streamlit provides a unified web interface and selected analytics.
-6. The AI chatbot answers natural-language questions through restricted, read-only access to curated data.
-7. Approved metrics and narratives are exported as traceable PDF reports.
-
-This separation keeps raw evidence immutable, business logic reusable, user interfaces consistent, and AI-generated explanations grounded in governed data.
+Detailed design history remains in the numbered milestone documents under `docs/`.
