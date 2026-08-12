@@ -151,4 +151,24 @@ The application uses five-minute Streamlit data caches and a reusable read-only 
 
 ## Deployment
 
-M20 prepares configuration, resilience, logging, and performance for deployment, but the project is not deployed yet. Cloud deployment and provider-specific infrastructure are the scope of the next milestone, M21.
+InsightFlow AI is deployed as a GitHub-backed Streamlit web service on Render, using Neon PostgreSQL for managed analytics storage and Gemini for governed Assistant planning.
+
+```mermaid
+flowchart LR
+    GH["GitHub main branch"] --> R["Render Streamlit service"]
+    R --> N["Neon PostgreSQL"]
+    R --> G["Gemini API"]
+```
+
+Render installs `requirements.txt` and uses the manually verified start command:
+
+```bash
+streamlit run streamlit_app/app.py --server.port $PORT --server.address 0.0.0.0 --server.enableCORS false --server.enableXsrfProtection false
+```
+
+The production service requires these environment variable names:
+
+- `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`
+- `AI_API_KEY`, `AI_PROVIDER`, `AI_MODEL`, `AI_BASE_URL`
+
+Values belong in Render's environment configuration, never in Git. Production validation passed for Render health and dashboard rendering, Neon PostgreSQL over SSL/TLS, and the governed Render → Gemini → Neon Assistant path. M21 is complete and frozen. Safe updates should be merged to the deployment branch, allowed to complete Render's normal Git-backed deployment, and followed by health, core-page, database, and one governed Assistant smoke check. Full evidence is recorded in [`docs/21_cloud_deployment_production_validation.md`](docs/21_cloud_deployment_production_validation.md). The live URL is intentionally omitted because it is not recorded in repository metadata.
