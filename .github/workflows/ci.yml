@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install pytest
+
+      - name: Compile Python sources
+        run: python -m compileall -q etl streamlit_app tests database scripts
+
+      - name: Check repository safety
+        run: python scripts/check_repository_safety.py
+
+      - name: Run focused deterministic tests
+        run: >-
+          python -m pytest -q
+          tests/test_anomalies.py
+          tests/test_assistant.py
+          tests/test_assistant_ranking.py
+          tests/test_assistant_security.py
+          tests/test_assistant_trends.py
+          tests/test_comparisons.py
+          tests/test_forecasting.py
+          tests/test_health.py
+          tests/test_insight_comparisons.py
+          tests/test_portfolio.py

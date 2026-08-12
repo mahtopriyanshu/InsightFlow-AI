@@ -1,5 +1,7 @@
 # InsightFlow AI
 
+[![CI](https://github.com/mahtopriyanshu/InsightFlow-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/mahtopriyanshu/InsightFlow-AI/actions/workflows/ci.yml)
+
 InsightFlow AI is an end-to-end e-commerce intelligence platform built on the Olist marketplace dataset. It combines governed PostgreSQL analytics, interactive Streamlit decision-support workflows, statistical forecasting, and a constrained AI business analyst.
 
 ## Problem
@@ -172,3 +174,9 @@ The production service requires these environment variable names:
 - `AI_API_KEY`, `AI_PROVIDER`, `AI_MODEL`, `AI_BASE_URL`
 
 Values belong in Render's environment configuration, never in Git. Production validation passed for Render health and dashboard rendering, Neon PostgreSQL over SSL/TLS, and the governed Render → Gemini → Neon Assistant path. M21 is complete and frozen. Safe updates should be merged to the deployment branch, allowed to complete Render's normal Git-backed deployment, and followed by health, core-page, database, and one governed Assistant smoke check. Full evidence is recorded in [`docs/21_cloud_deployment_production_validation.md`](docs/21_cloud_deployment_production_validation.md). The live URL is intentionally omitted because it is not recorded in repository metadata.
+
+## CI/CD Quality Gates
+
+GitHub Actions runs the [`CI` workflow](.github/workflows/ci.yml) on pushes to `main` and pull requests targeting `main`. The workflow installs `requirements.txt` on Python 3.12, compiles Python sources, checks that forbidden secret/export files are not tracked, validates `.env.example` placeholders, and runs a focused deterministic test suite covering core business logic, forecasting, and the governed Assistant's semantic and security behavior.
+
+CI requires no Neon, Gemini, or Render credentials and never deploys the application. GitHub Actions validates repository changes; the existing Git-backed Render service remains responsible for deployment, Neon remains the managed PostgreSQL service, and Gemini remains the external governed planning provider. See [`docs/22_ci_cd_quality_gates.md`](docs/22_ci_cd_quality_gates.md) for selection boundaries and developer workflow.
