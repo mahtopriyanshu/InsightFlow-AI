@@ -2,10 +2,25 @@
 from datetime import date
 from unittest.mock import patch
 import os
+import pytest
 from streamlit_app.assistant.config import AISettings
 from streamlit_app.assistant.planner import local_plan
 from streamlit_app.assistant.sql_generator import effective_filters
 from streamlit_app.utils.filters import FilterState
+
+
+@pytest.fixture(autouse=True)
+def approved_filter_options(monkeypatch):
+    """Keep scope tests deterministic and independent of PostgreSQL."""
+    monkeypatch.setattr(
+        "streamlit_app.assistant.sql_generator.get_filter_options",
+        lambda: (
+            date(2016, 9, 4),
+            date(2018, 10, 17),
+            ["MG", "RJ", "SP"],
+            ["health_beauty"],
+        ),
+    )
 
 
 def test_golden_intents_map_deterministically():
